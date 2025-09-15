@@ -1,0 +1,55 @@
+# Install gensim for Word2Vec
+ !pip install gensim nltk
+ import gensim
+ from gensim.models import Word2Vec
+ from nltk.tokenize import word_tokenize
+ import nltk
+ # Download tokenizer resources
+ nltk.download("punkt")
+ # ---------------------------
+# 1. Sample Document Corpus
+ # ---------------------------
+corpus = [
+    "Deep learning is a subset of machine learning",
+    "Neural networks are the backbone of deep learning",
+    "Word embeddings capture semantic meaning of words",
+    "Reinforcement learning is used for decision making",
+    "Python is widely used for machine learning and AI"
+ ]
+ # ---------------------------
+# 2. Preprocessing - Tokenize
+ # ---------------------------
+tokenized_corpus = [word_tokenize(sentence.lower()) for sentence in 
+corpus]
+ print("Tokenized Corpus:", tokenized_corpus)
+ # ---------------------------
+# 3. Train Word2Vec Model
+ # ---------------------------
+model = Word2Vec(
+    sentences=tokenized_corpus,   # input text
+    vector_size=50,              # embedding dimensions
+    window=3,                    # context window size
+    sg=1,                        # 1 = Skip-gram, 0 = CBOW
+    min_count=1,                 # ignore rare words
+    workers=4,                   # parallel training
+    epochs=100                   # training iterations
+ )
+ # ---------------------------
+# 4. Save and Load Model
+ # ---------------------------
+model.save("word2vec_model.model")
+ loaded_model = Word2Vec.load("word2vec_model.model")
+ # ---------------------------
+# 5. Generate Embeddings
+ # ---------------------------
+word = "learning"
+ vector = loaded_model.wv[word]
+ print(f"\nVector Representation of '{word}':\n", vector)
+ # ---------------------------
+# 6. Find Similar Words
+ # ---------------------------
+similar_words = loaded_model.wv.most_similar("learning")
+ print("\nWords similar to 'learning':")
+ for word, score in similar_words:
+    print(f"{word} → {score:.4f}")
+ 
