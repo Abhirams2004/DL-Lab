@@ -1,1 +1,66 @@
+pip install tensorflow
+||
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import Dense, GlobalAveragePooling2D
+from tensorflow.keras.applications import ResNet50
+from tensorflow.keras.applications.resnet50 import preprocess_input
+
+# 1) Dataset paths adjust as per requirement
+train_dir = "data/train"
+val_dir = "data/val"
+img_size = (224, 224)
+batch_size = 32
+
+# 2) Data generators
+train_gen = ImageDataGenerator(preprocessing_function=preprocess_input).flow_from_directory(
+    train_dir, target_size=img_size, batch_size=batch_size, class_mode='categorical'
+)
+val_gen = ImageDataGenerator(preprocessing_function=preprocess_input).flow_from_directory(
+    val_dir, target_size=img_size, batch_size=batch_size, class_mode='categorical'
+)
+
+num_classes = train_gen.num_classes
+
+# 3) Pre-trained model (ResNet50) without top layer
+base_model = ResNet50(weights='imagenet', include_top=False, input_shape=(224,224,3))
+base_model.trainable = False  # Freeze base model
+
+# 4) Add classification head
+x = base_model.output
+x = GlobalAveragePooling2D()(x)
+x = Dense(128, activation='relu')(x)
+predictions = Dense(num_classes, activation='softmax')(x)
+
+model = Model(inputs=base_model.input, outputs=predictions)
+
+# 5) Compile model
+model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+
+# 6) Train model
+model.fit(train_gen, validation_data=val_gen, epochs=5)
+
+# 7) Evaluate model
+loss, acc = model.evaluate(val_gen)
+print(f"Validation Loss: {loss:.4f}, Validation Accuracy: {acc:.4f}")
+
+
+OUTPUT
+
+Found 18 images belonging to 2 classes.
+Found 2 images belonging to 2 classes.
+
+Epoch 1/5
+1/1 [==============================] - 5s 5s/step - loss: 0.5678 - accuracy: 0.7222 - val_loss: 0.0982 - val_accuracy: 1.0000
+Epoch 2/5
+1/1 [==============================] - 1s 935ms/step - loss: 0.0476 - accuracy: 1.0000 - val_loss: 0.0172 - val_accuracy: 1.0000
+Epoch 3/5
+1/1 [==============================] - 1s 918ms/step - loss: 0.0094 - accuracy: 1.0000 - val_loss: 0.0040 - val_accuracy: 1.0000
+Epoch 4/5
+1/1 [==============================] - 1s 927ms/step - loss: 0.0031 - accuracy: 1.0000 - val_loss: 0.0011 - val_accuracy: 1.0000
+Epoch 5/5
+1/1 [==============================] - 1s 1s/step - loss: 0.0012 - accuracy: 1.0000 - val_loss: 3.5405e-04 - val_accuracy: 1.0000
+1/1 [==============================] - 0s 126ms/step - loss: 3.5405e-04 - accuracy: 1.0000
+
+Validation Loss: 0.0004, Validation Accuracy: 1.0000
 
